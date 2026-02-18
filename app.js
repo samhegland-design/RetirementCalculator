@@ -157,9 +157,20 @@ function displayHistoryChart(data) {
         window.historyChart.destroy();
     }
     
-    // Create labels and data arrays
-    const labels = data.map(row => row['Date']);
-    const totals = data.map(row => parseNumber(row['Total']));
+    // Parse dates and create data points with proper date objects
+    const dataPoints = data.map(row => {
+        // Parse the date string into a proper Date object
+        const dateStr = row['Date'];
+        const date = new Date(dateStr);
+        
+        return {
+            x: date.getTime(), // Use timestamp for proper spacing
+            y: parseNumber(row['Total'])
+        };
+    });
+    
+    // Sort by date to ensure proper ordering
+    dataPoints.sort((a, b) => a.x - b.x);
     
     // Detect if we're in landscape mode on mobile
     const isMobile = window.innerWidth < 768;
@@ -167,9 +178,9 @@ function displayHistoryChart(data) {
     let aspectRatio;
     
     if (isMobile && isLandscape) {
-        aspectRatio = 3;
+        aspectRatio = 2;
     } else if (isMobile) {
-        aspectRatio = 1;
+        aspectRatio = 1.5;
     } else {
         aspectRatio = 2.5;
     }
@@ -177,14 +188,15 @@ function displayHistoryChart(data) {
     window.historyChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
             datasets: [{
                 label: 'Total Balance',
-                data: totals,
+                data: dataPoints,
                 borderColor: '#667eea',
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 tension: 0.4,
-                fill: true
+                fill: true,
+                pointRadius: 2,
+                pointHoverRadius: 5
             }]
         },
         options: {
@@ -197,6 +209,15 @@ function displayHistoryChart(data) {
                 },
                 tooltip: {
                     callbacks: {
+                        title: function(context) {
+                            const timestamp = context[0].parsed.x;
+                            const date = new Date(timestamp);
+                            return date.toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            });
+                        },
                         label: function(context) {
                             return 'Balance: ' + formatCurrency(context.parsed.y);
                         }
@@ -205,7 +226,22 @@ function displayHistoryChart(data) {
             },
             scales: {
                 x: {
+                    type: 'linear',
                     ticks: {
+                        callback: function(value) {
+                            const date = new Date(value);
+                            if (isMobile) {
+                                return date.toLocaleDateString('en-US', { 
+                                    year: '2-digit', 
+                                    month: 'short' 
+                                });
+                            } else {
+                                return date.toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'short' 
+                                });
+                            }
+                        },
                         maxRotation: 45,
                         minRotation: 45,
                         autoSkip: true,
@@ -227,6 +263,6 @@ function displayHistoryChart(data) {
 
 function formatCurrency(value) {
     const num = parseFloat(value);
-    if (isNaN(num)) return '$0.00';
-    return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (isNaN(num)) return '$0';
+    return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 }
