@@ -397,11 +397,13 @@ function displayHistoryChart(data) {
                     }
                 },
                 y: {
-                    min: minValue - padding,
+                    min: 0,
                     max: maxValue + padding,
                     ticks: {
                         callback: function(value) {
-                            return '$' + value.toLocaleString();
+                            // Format in millions
+                            const millions = value / 1000000;
+                            return '$' + millions.toFixed(1) + 'M';
                         }
                     }
                 }
