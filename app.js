@@ -364,13 +364,14 @@ function displayHistoryChart(data) {
                 x: {
                     type: 'linear',
                     grid: {
+                        display: true,
+                        drawOnChartArea: true,
                         color: function(context) {
                             const value = context.tick.value;
                             const date = new Date(value);
-                            const year = date.getFullYear();
-                            // Show grid lines only on even-year Decembers
-                            if (date.getMonth() === 11 && year % 2 === 0) {
-                                return '#9ca3af';
+                            // Show light grid lines only on December (year end)
+                            if (date.getMonth() === 11) {
+                                return 'rgba(0, 0, 0, 0.1)';
                             }
                             return 'transparent';
                         }
