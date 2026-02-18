@@ -14,13 +14,34 @@
         </header>
 
         <div class="summary-cards">
-            <div class="card">
-                <h3>Total Net Worth</h3>
-                <p class="amount" id="totalBalance">$0.00</p>
-            </div>
-            <div class="card">
-                <h3>Change Past Year</h3>
-                <p class="amount" id="yearChange">$0.00</p>
+            <div class="card summary-card">
+                <div class="summary-header">
+                    <select id="balanceSelector" class="balance-selector">
+                        <option value="Total">Total Net Worth</option>
+                        <option value="401k">401k</option>
+                        <option value="Checking">Checking</option>
+                        <option value="IRAs">IRAs</option>
+                        <option value="Home">Home</option>
+                        <option value="529">529</option>
+                        <option value="Pension">Pension</option>
+                        <option value="HSA">HSA</option>
+                        <option value="Stock Opt.">Stock Options</option>
+                    </select>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <h3>Current Balance</h3>
+                        <p class="amount" id="currentBalance">$0.00</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Change Past Month</h3>
+                        <p class="amount" id="monthChange">$0.00</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Change Past Year</h3>
+                        <p class="amount" id="yearChange">$0.00</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -84,6 +105,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js?v=6"></script>
+    <script src="app.js?v=7"></script>
 </body>
 </html>

@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('startDateFilter').addEventListener('change', function() {
         updateHistoryChart();
     });
+    document.getElementById('balanceSelector').addEventListener('change', function() {
+        updateSummaryCard();
+    });
     
     // Redraw chart on orientation change
     window.addEventListener('orientationchange', function() {
@@ -130,21 +133,44 @@ function parseNumber(value) {
     return isNaN(num) ? 0 : num;
 }
 
-function displayCurrentBalances(data) {
-    const latestRow = data[data.length - 1];
+function updateSummaryCard() {
+    if (allData.length === 0) return;
     
-    // Display summary cards
-    const total = parseNumber(latestRow['Total']);
+    const selectedAccount = document.getElementById('balanceSelector').value;
+    const latestRow = allData[allData.length - 1];
+    const currentBalance = parseNumber(latestRow[selectedAccount]);
     
-    // Calculate change over past year (last 12 rows)
-    const last12Rows = data.slice(-12);
-    const yearChange = last12Rows.reduce((sum, row) => sum + parseNumber(row['Change']), 0);
+    // Calculate month change (last row minus row before it)
+    let monthChange = 0;
+    if (allData.length >= 2) {
+        const previousRow = allData[allData.length - 2];
+        monthChange = currentBalance - parseNumber(previousRow[selectedAccount]);
+    }
     
-    document.getElementById('totalBalance').textContent = formatCurrency(total);
+    // Calculate year change (last row minus 12 rows before it)
+    let yearChange = 0;
+    if (allData.length >= 13) {
+        const yearAgoRow = allData[allData.length - 13];
+        yearChange = currentBalance - parseNumber(yearAgoRow[selectedAccount]);
+    }
+    
+    document.getElementById('currentBalance').textContent = formatCurrency(currentBalance);
+    
+    const monthChangeElement = document.getElementById('monthChange');
+    monthChangeElement.textContent = formatCurrency(monthChange);
+    monthChangeElement.className = 'amount ' + (monthChange >= 0 ? 'positive' : 'negative');
     
     const yearChangeElement = document.getElementById('yearChange');
     yearChangeElement.textContent = formatCurrency(yearChange);
     yearChangeElement.className = 'amount ' + (yearChange >= 0 ? 'positive' : 'negative');
+}
+
+function displayCurrentBalances(data) {
+    // Update summary card
+    updateSummaryCard();
+    
+    const latestRow = data[data.length - 1];
+    const total = parseNumber(latestRow['Total']);
     
     // Display account balances with Total Net Worth at top
     const container = document.getElementById('accountsList');
@@ -341,20 +367,12 @@ function displayHistoryChart(data) {
                         color: function(context) {
                             const value = context.tick.value;
                             const date = new Date(value);
-                            // Make December grid lines more prominent
-                            if (date.getMonth() === 11) { // December is month 11
+                            const year = date.getFullYear();
+                            // Show grid lines only on even-year Decembers
+                            if (date.getMonth() === 11 && year % 2 === 0) {
                                 return '#9ca3af';
                             }
-                            return '#e5e7eb';
-                        },
-                        lineWidth: function(context) {
-                            const value = context.tick.value;
-                            const date = new Date(value);
-                            // Make December grid lines thicker
-                            if (date.getMonth() === 11) {
-                                return 2;
-                            }
-                            return 1;
+                            return 'transparent';
                         }
                     },
                     ticks: {
