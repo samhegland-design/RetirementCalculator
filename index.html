@@ -34,8 +34,18 @@
         </div>
 
         <div class="chart-section">
-            <h2>Balance History</h2>
-            <canvas id="historyChart"></canvas>
+            <div class="chart-header">
+                <h2>Balance History</h2>
+                <div class="chart-controls">
+                    <label for="startDateFilter">Start Date:</label>
+                    <select id="startDateFilter">
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="historyChart"></canvas>
+            </div>
         </div>
 
         <div class="chart-section">

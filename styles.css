@@ -98,6 +98,48 @@ h2 {
     color: #333;
 }
 
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.chart-header h2 {
+    margin-bottom: 0;
+}
+
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-controls label {
+    font-weight: 600;
+    color: #666;
+}
+
+.chart-controls select {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: white;
+    cursor: pointer;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+}
+
+.chart-container canvas {
+    max-height: 400px;
+}
+
 .accounts-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

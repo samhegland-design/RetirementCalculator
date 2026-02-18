@@ -5,11 +5,15 @@ let config = {
 };
 
 const accountColumns = ['401k', 'Checking', 'IRAs', 'Home', '529', 'Pension', 'HSA', 'Stock Opt.'];
+let allData = []; // Store all data globally for filtering
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
     document.getElementById('refreshBtn').addEventListener('click', loadData);
+    document.getElementById('startDateFilter').addEventListener('change', function() {
+        updateHistoryChart();
+    });
 });
 
 async function loadData() {
@@ -24,6 +28,8 @@ async function loadData() {
             return;
         }
         
+        allData = data; // Store globally
+        populateDateFilter(data);
         displayCurrentBalances(data);
         displayHistoryChart(data);
         displayBreakdownChart(data);
@@ -66,6 +72,43 @@ async function fetchSheetData(sheetName) {
     
     console.log('Parsed rows:', rows);
     return rows;
+}
+
+function populateDateFilter(data) {
+    const select = document.getElementById('startDateFilter');
+    const dates = data.map(row => row['Date']).filter(date => date);
+    
+    // Clear existing options except "All Time"
+    select.innerHTML = '<option value="all">All Time</option>';
+    
+    // Add each unique date as an option
+    dates.forEach(date => {
+        const option = document.createElement('option');
+        option.value = date;
+        option.textContent = date;
+        select.appendChild(option);
+    });
+    
+    // Set default to 6/30/2014 if it exists
+    const defaultDate = '6/30/2014';
+    const hasDefault = dates.some(date => date === defaultDate);
+    if (hasDefault) {
+        select.value = defaultDate;
+    }
+}
+
+function updateHistoryChart() {
+    const selectedDate = document.getElementById('startDateFilter').value;
+    let filteredData = allData;
+    
+    if (selectedDate !== 'all') {
+        const startIndex = allData.findIndex(row => row['Date'] === selectedDate);
+        if (startIndex !== -1) {
+            filteredData = allData.slice(startIndex);
+        }
+    }
+    
+    displayHistoryChart(filteredData);
 }
 
 function parseNumber(value) {
@@ -129,6 +172,7 @@ function displayHistoryChart(data) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
                     display: false
