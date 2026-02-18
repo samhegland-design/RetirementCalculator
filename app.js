@@ -41,6 +41,13 @@ async function loadData() {
         populateDateFilter(data);
         displayCurrentBalances(data);
         displayHistoryChart(data);
+        
+        // Add event listeners for account toggles after chart is created
+        document.querySelectorAll('.account-toggle').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateHistoryChart();
+            });
+        });
     } catch (error) {
         console.error('Error loading data:', error);
         alert('Failed to load data. Error: ' + error.message + '. Check browser console (F12) for details.');
@@ -149,6 +156,7 @@ function displayCurrentBalances(data) {
                 <span class="account-name">Total Net Worth</span>
                 <span class="account-balance">${formatCurrency(total)}</span>
             </div>
+            <div class="account-history" style="display: none;"></div>
         </div>
     `;
     
@@ -180,11 +188,11 @@ function toggleAccountHistory(element, data) {
     const accountName = element.getAttribute('data-account');
     const historyDiv = element.querySelector('.account-history');
     
-    if (!historyDiv) return; // Total Net Worth doesn't have history
+    if (!historyDiv) return;
     
     if (historyDiv.style.display === 'none') {
-        // Expand - show past 2 years (24 rows)
-        const past24Rows = data.slice(-24);
+        // Expand - show past 2 years (24 rows) in reverse order (newest first)
+        const past24Rows = data.slice(-24).reverse();
         
         let historyHtml = '<div class="history-grid">';
         past24Rows.forEach(row => {
@@ -215,20 +223,65 @@ function displayHistoryChart(data) {
         window.historyChart.destroy();
     }
     
-    // Parse dates and create data points with proper date objects
-    const dataPoints = data.map(row => {
-        // Parse the date string into a proper Date object
-        const dateStr = row['Date'];
-        const date = new Date(dateStr);
+    // Get selected accounts from checkboxes
+    const selectedAccounts = Array.from(document.querySelectorAll('.account-toggle:checked'))
+        .map(cb => cb.value);
+    
+    // If nothing selected, show Total by default
+    if (selectedAccounts.length === 0) {
+        selectedAccounts.push('Total');
+        document.querySelector('.account-toggle[value="Total"]').checked = true;
+    }
+    
+    // Define colors for each account
+    const colors = {
+        'Total': '#667eea',
+        '401k': '#764ba2',
+        'Checking': '#f093fb',
+        'IRAs': '#4facfe',
+        'Home': '#43e97b',
+        '529': '#fa709a',
+        'Pension': '#fee140',
+        'HSA': '#30cfd0',
+        'Stock Opt.': '#ff6b6b'
+    };
+    
+    // Create datasets for each selected account
+    const datasets = selectedAccounts.map(account => {
+        const dataPoints = data.map(row => {
+            const dateStr = row['Date'];
+            const date = new Date(dateStr);
+            
+            return {
+                x: date.getTime(),
+                y: parseNumber(row[account])
+            };
+        });
+        
+        // Sort by date
+        dataPoints.sort((a, b) => a.x - b.x);
         
         return {
-            x: date.getTime(), // Use timestamp for proper spacing
-            y: parseNumber(row['Total'])
+            label: account === 'Total' ? 'Total Net Worth' : account,
+            data: dataPoints,
+            borderColor: colors[account] || '#667eea',
+            backgroundColor: 'transparent',
+            tension: 0.4,
+            fill: false,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            borderWidth: account === 'Total' ? 3 : 2
         };
     });
     
-    // Sort by date to ensure proper ordering
-    dataPoints.sort((a, b) => a.x - b.x);
+    // Calculate min and max for y-axis based on selected data
+    let allValues = [];
+    datasets.forEach(dataset => {
+        dataset.data.forEach(point => allValues.push(point.y));
+    });
+    const minValue = Math.min(...allValues);
+    const maxValue = Math.max(...allValues);
+    const padding = (maxValue - minValue) * 0.1; // 10% padding
     
     // Detect if we're in landscape mode on mobile
     const isMobile = window.innerWidth < 768;
@@ -246,16 +299,7 @@ function displayHistoryChart(data) {
     window.historyChart = new Chart(ctx, {
         type: 'line',
         data: {
-            datasets: [{
-                label: 'Total Balance',
-                data: dataPoints,
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                tension: 0.4,
-                fill: true,
-                pointRadius: 2,
-                pointHoverRadius: 5
-            }]
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -263,7 +307,15 @@ function displayHistoryChart(data) {
             aspectRatio: aspectRatio,
             plugins: {
                 legend: {
-                    display: false
+                    display: selectedAccounts.length > 1,
+                    position: 'top',
+                    labels: {
+                        boxWidth: 20,
+                        padding: 10,
+                        font: {
+                            size: 11
+                        }
+                    }
                 },
                 tooltip: {
                     callbacks: {
@@ -277,7 +329,7 @@ function displayHistoryChart(data) {
                             });
                         },
                         label: function(context) {
-                            return 'Balance: ' + formatCurrency(context.parsed.y);
+                            return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
                         }
                     }
                 }
@@ -285,6 +337,26 @@ function displayHistoryChart(data) {
             scales: {
                 x: {
                     type: 'linear',
+                    grid: {
+                        color: function(context) {
+                            const value = context.tick.value;
+                            const date = new Date(value);
+                            // Make December grid lines more prominent
+                            if (date.getMonth() === 11) { // December is month 11
+                                return '#9ca3af';
+                            }
+                            return '#e5e7eb';
+                        },
+                        lineWidth: function(context) {
+                            const value = context.tick.value;
+                            const date = new Date(value);
+                            // Make December grid lines thicker
+                            if (date.getMonth() === 11) {
+                                return 2;
+                            }
+                            return 1;
+                        }
+                    },
                     ticks: {
                         callback: function(value) {
                             const date = new Date(value);
@@ -307,7 +379,8 @@ function displayHistoryChart(data) {
                     }
                 },
                 y: {
-                    beginAtZero: false,
+                    min: minValue - padding,
+                    max: maxValue + padding,
                     ticks: {
                         callback: function(value) {
                             return '$' + value.toLocaleString();
@@ -321,8 +394,8 @@ function displayHistoryChart(data) {
 
 function formatCurrency(value) {
     const num = parseFloat(value);
-    if (isNaN(num)) return '$0.00';
-    return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (isNaN(num)) return '$0';
+    return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 }
 
 function formatCurrencyNoDecimals(value) {
