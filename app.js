@@ -1,7 +1,7 @@
 // Configuration - Replace these with your actual values
 let config = {
     apiKey: 'AIzaSyDJqPLDxldipUW9vcc1Hs5PTCEpeiVOyQg',
-    sheetId: '1RG1-mUwgzxB_jquutq6dmk5ZMn_IrFX8bt4v8aTKXgA'
+    sheetId: '1JKM2vjxECtqdv62nTnNEU5hONNl3L7KU'
 };
 
 const accountColumns = ['401k', 'Checking', 'IRAs', 'Home', '529', 'Pension', 'HSA', 'Stock Opt.'];
