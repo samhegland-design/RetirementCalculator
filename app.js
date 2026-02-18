@@ -98,7 +98,7 @@ function displayCurrentBalances(data) {
 function displayHistoryChart(data) {
     const ctx = document.getElementById('historyChart').getContext('2d');
     
-    if (window.historyChart) {
+    if (window.historyChart && typeof window.historyChart.destroy === 'function') {
         window.historyChart.destroy();
     }
     
@@ -142,7 +142,7 @@ function displayHistoryChart(data) {
 function displayBreakdownChart(data) {
     const ctx = document.getElementById('breakdownChart').getContext('2d');
     
-    if (window.breakdownChart) {
+    if (window.breakdownChart && typeof window.breakdownChart.destroy === 'function') {
         window.breakdownChart.destroy();
     }
     
