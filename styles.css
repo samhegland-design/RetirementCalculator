@@ -140,6 +140,16 @@ h2 {
     max-height: 400px;
 }
 
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px;
+    }
+    
+    .chart-container canvas {
+        max-height: 300px;
+    }
+}
+
 .accounts-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

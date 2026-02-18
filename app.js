@@ -78,6 +78,8 @@ function populateDateFilter(data) {
     const select = document.getElementById('startDateFilter');
     const dates = data.map(row => row['Date']).filter(date => date);
     
+    console.log('Available dates:', dates);
+    
     // Clear existing options except "All Time"
     select.innerHTML = '<option value="all">All Time</option>';
     
@@ -89,11 +91,29 @@ function populateDateFilter(data) {
         select.appendChild(option);
     });
     
-    // Set default to 6/30/2014 if it exists
-    const defaultDate = '6/30/2014';
-    const hasDefault = dates.some(date => date === defaultDate);
-    if (hasDefault) {
+    // Try multiple date formats for 6/30/2014
+    const possibleDefaults = ['6/30/2014', '2014-06-30', '06/30/2014', '30/06/2014'];
+    let defaultDate = null;
+    
+    for (const format of possibleDefaults) {
+        if (dates.some(date => date === format)) {
+            defaultDate = format;
+            break;
+        }
+    }
+    
+    // If no match found, check if any date contains "2014" and "6" and "30"
+    if (!defaultDate) {
+        defaultDate = dates.find(date => 
+            date.includes('2014') && date.includes('6') && date.includes('30')
+        );
+    }
+    
+    if (defaultDate) {
         select.value = defaultDate;
+        console.log('Set default date to:', defaultDate);
+    } else {
+        console.log('Default date 6/30/2014 not found in data');
     }
 }
 
@@ -172,7 +192,8 @@ function displayHistoryChart(data) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
+            aspectRatio: window.innerWidth < 768 ? 1.2 : 2.5,
             plugins: {
                 legend: {
                     display: false
