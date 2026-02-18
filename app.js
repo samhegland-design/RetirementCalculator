@@ -90,31 +90,6 @@ function populateDateFilter(data) {
         option.textContent = date;
         select.appendChild(option);
     });
-    
-    // Try multiple date formats for 6/30/2014
-    const possibleDefaults = ['6/30/2014', '2014-06-30', '06/30/2014', '30/06/2014'];
-    let defaultDate = null;
-    
-    for (const format of possibleDefaults) {
-        if (dates.some(date => date === format)) {
-            defaultDate = format;
-            break;
-        }
-    }
-    
-    // If no match found, check if any date contains "2014" and "6" and "30"
-    if (!defaultDate) {
-        defaultDate = dates.find(date => 
-            date.includes('2014') && date.includes('6') && date.includes('30')
-        );
-    }
-    
-    if (defaultDate) {
-        select.value = defaultDate;
-        console.log('Set default date to:', defaultDate);
-    } else {
-        console.log('Default date 6/30/2014 not found in data');
-    }
 }
 
 function updateHistoryChart() {
@@ -208,11 +183,6 @@ function displayHistoryChart(data) {
                         unit: 'month',
                         displayFormats: {
                             month: 'MMM yyyy'
-                        }
-                    },
-                    adapters: {
-                        date: {
-                            locale: 'en-US'
                         }
                     }
                 },
