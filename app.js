@@ -14,6 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('startDateFilter').addEventListener('change', function() {
         updateHistoryChart();
     });
+    
+    // Redraw chart on orientation change
+    window.addEventListener('orientationchange', function() {
+        setTimeout(function() {
+            if (allData.length > 0) {
+                updateHistoryChart();
+            }
+        }, 100);
+    });
 });
 
 async function loadData() {
@@ -32,7 +41,6 @@ async function loadData() {
         populateDateFilter(data);
         displayCurrentBalances(data);
         displayHistoryChart(data);
-        displayBreakdownChart(data);
     } catch (error) {
         console.error('Error loading data:', error);
         alert('Failed to load data. Error: ' + error.message + '. Check browser console (F12) for details.');
@@ -153,6 +161,19 @@ function displayHistoryChart(data) {
     const labels = data.map(row => row['Date']);
     const totals = data.map(row => parseNumber(row['Total']));
     
+    // Detect if we're in landscape mode on mobile
+    const isMobile = window.innerWidth < 768;
+    const isLandscape = window.innerWidth > window.innerHeight;
+    let aspectRatio;
+    
+    if (isMobile && isLandscape) {
+        aspectRatio = 3;
+    } else if (isMobile) {
+        aspectRatio = 1;
+    } else {
+        aspectRatio = 2.5;
+    }
+    
     window.historyChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -169,7 +190,7 @@ function displayHistoryChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            aspectRatio: window.innerWidth < 768 ? 1.5 : 3,
+            aspectRatio: aspectRatio,
             plugins: {
                 legend: {
                     display: false
@@ -188,7 +209,7 @@ function displayHistoryChart(data) {
                         maxRotation: 45,
                         minRotation: 45,
                         autoSkip: true,
-                        maxTicksLimit: 12
+                        maxTicksLimit: isMobile ? 8 : 15
                     }
                 },
                 y: {
@@ -204,50 +225,8 @@ function displayHistoryChart(data) {
     });
 }
 
-function displayBreakdownChart(data) {
-    const ctx = document.getElementById('breakdownChart').getContext('2d');
-    
-    if (window.breakdownChart && window.breakdownChart instanceof Chart) {
-        window.breakdownChart.destroy();
-    }
-    
-    const latestRow = data[data.length - 1];
-    const balances = accountColumns.map(account => parseNumber(latestRow[account]));
-    
-    window.breakdownChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: accountColumns,
-            datasets: [{
-                data: balances,
-                backgroundColor: [
-                    '#667eea', '#764ba2', '#f093fb', '#4facfe',
-                    '#43e97b', '#fa709a', '#fee140', '#30cfd0'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            return label + ': ' + formatCurrency(value);
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
 function formatCurrency(value) {
     const num = parseFloat(value);
-    if (isNaN(num)) return '$0';
-    return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    if (isNaN(num)) return '$0.00';
+    return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
