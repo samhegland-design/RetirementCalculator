@@ -16,8 +16,11 @@ async function loadData() {
     try {
         const data = await fetchSheetData('Summary');
         
+        console.log('Fetched data:', data);
+        console.log('Data length:', data.length);
+        
         if (data.length === 0) {
-            alert('No data found in the Summary sheet.');
+            alert('No data found in the Summary sheet. Check browser console (F12) for details.');
             return;
         }
         
@@ -26,25 +29,43 @@ async function loadData() {
         displayBreakdownChart(data);
     } catch (error) {
         console.error('Error loading data:', error);
-        alert('Failed to load data. Check your API key and Sheet ID.');
+        alert('Failed to load data. Error: ' + error.message + '. Check browser console (F12) for details.');
     }
 }
 
 async function fetchSheetData(sheetName) {
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${sheetName}?key=${config.apiKey}`;
+    console.log('Fetching from URL:', url);
+    
     const response = await fetch(url);
     const data = await response.json();
     
-    if (!data.values) return [];
+    console.log('API Response:', data);
+    
+    if (data.error) {
+        throw new Error(data.error.message || 'API Error');
+    }
+    
+    if (!data.values) {
+        console.warn('No values found in response');
+        return [];
+    }
+    
+    console.log('Raw values:', data.values);
     
     const headers = data.values[0];
-    return data.values.slice(1).map(row => {
+    console.log('Headers:', headers);
+    
+    const rows = data.values.slice(1).map(row => {
         const obj = {};
         headers.forEach((header, index) => {
             obj[header] = row[index] || '';
         });
         return obj;
     });
+    
+    console.log('Parsed rows:', rows);
+    return rows;
 }
 
 function displayCurrentBalances(data) {
