@@ -149,21 +149,17 @@ function displayHistoryChart(data) {
         window.historyChart.destroy();
     }
     
-    // Parse dates and create data points with timestamps
-    const dataPoints = data.map(row => {
-        const date = new Date(row['Date']);
-        return {
-            x: date.getTime(),
-            y: parseNumber(row['Total'])
-        };
-    });
+    // Create labels and data arrays
+    const labels = data.map(row => row['Date']);
+    const totals = data.map(row => parseNumber(row['Total']));
     
     window.historyChart = new Chart(ctx, {
         type: 'line',
         data: {
+            labels: labels,
             datasets: [{
                 label: 'Total Balance',
-                data: dataPoints,
+                data: totals,
                 borderColor: '#667eea',
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 tension: 0.4,
@@ -180,10 +176,6 @@ function displayHistoryChart(data) {
                 },
                 tooltip: {
                     callbacks: {
-                        title: function(context) {
-                            const date = new Date(context[0].parsed.x);
-                            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-                        },
                         label: function(context) {
                             return 'Balance: ' + formatCurrency(context.parsed.y);
                         }
@@ -192,14 +184,11 @@ function displayHistoryChart(data) {
             },
             scales: {
                 x: {
-                    type: 'linear',
                     ticks: {
-                        callback: function(value) {
-                            const date = new Date(value);
-                            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-                        },
                         maxRotation: 45,
-                        minRotation: 45
+                        minRotation: 45,
+                        autoSkip: true,
+                        maxTicksLimit: 12
                     }
                 },
                 y: {
