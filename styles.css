@@ -160,6 +160,23 @@ h2 {
     background: #f9fafb;
     border-radius: 8px;
     border-left: 4px solid #667eea;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.account-item:hover {
+    background: #f3f4f6;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.account-item.expanded {
+    background: #e5e7eb;
+}
+
+.account-header {
+    display: flex;
+    flex-direction: column;
 }
 
 .account-name {
@@ -172,6 +189,36 @@ h2 {
 .account-balance {
     font-weight: bold;
     font-size: 1.3rem;
+    color: #333;
+}
+
+.account-history {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #d1d5db;
+}
+
+.history-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.history-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 0.85rem;
+}
+
+.history-date {
+    color: #666;
+}
+
+.history-value {
+    font-weight: 600;
     color: #333;
 }
 

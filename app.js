@@ -128,26 +128,84 @@ function displayCurrentBalances(data) {
     
     // Display summary cards
     const total = parseNumber(latestRow['Total']);
-    const change = parseNumber(latestRow['Change']);
+    
+    // Calculate change over past year (last 12 rows)
+    const last12Rows = data.slice(-12);
+    const yearChange = last12Rows.reduce((sum, row) => sum + parseNumber(row['Change']), 0);
     
     document.getElementById('totalBalance').textContent = formatCurrency(total);
-    document.getElementById('lastUpdate').textContent = latestRow['Date'] || '-';
     
-    const changeElement = document.getElementById('lastChange');
-    changeElement.textContent = formatCurrency(change);
-    changeElement.className = 'amount ' + (change >= 0 ? 'positive' : 'negative');
+    const yearChangeElement = document.getElementById('yearChange');
+    yearChangeElement.textContent = formatCurrency(yearChange);
+    yearChangeElement.className = 'amount ' + (yearChange >= 0 ? 'positive' : 'negative');
     
-    // Display account balances
+    // Display account balances with Total Net Worth at top
     const container = document.getElementById('accountsList');
-    container.innerHTML = accountColumns.map(account => {
+    
+    // Add Total Net Worth as first item
+    let html = `
+        <div class="account-item" data-account="Total">
+            <div class="account-header">
+                <span class="account-name">Total Net Worth</span>
+                <span class="account-balance">${formatCurrency(total)}</span>
+            </div>
+        </div>
+    `;
+    
+    // Add individual accounts
+    html += accountColumns.map(account => {
         const balance = parseNumber(latestRow[account]);
         return `
-            <div class="account-item">
-                <span class="account-name">${account}</span>
-                <span class="account-balance">${formatCurrency(balance)}</span>
+            <div class="account-item" data-account="${account}">
+                <div class="account-header">
+                    <span class="account-name">${account}</span>
+                    <span class="account-balance">${formatCurrency(balance)}</span>
+                </div>
+                <div class="account-history" style="display: none;"></div>
             </div>
         `;
     }).join('');
+    
+    container.innerHTML = html;
+    
+    // Add click handlers for expanding/collapsing
+    document.querySelectorAll('.account-item').forEach(item => {
+        item.addEventListener('click', function() {
+            toggleAccountHistory(this, data);
+        });
+    });
+}
+
+function toggleAccountHistory(element, data) {
+    const accountName = element.getAttribute('data-account');
+    const historyDiv = element.querySelector('.account-history');
+    
+    if (!historyDiv) return; // Total Net Worth doesn't have history
+    
+    if (historyDiv.style.display === 'none') {
+        // Expand - show past 2 years (24 rows)
+        const past24Rows = data.slice(-24);
+        
+        let historyHtml = '<div class="history-grid">';
+        past24Rows.forEach(row => {
+            const value = parseNumber(row[accountName]);
+            historyHtml += `
+                <div class="history-row">
+                    <span class="history-date">${row['Date']}</span>
+                    <span class="history-value">${formatCurrencyNoDecimals(value)}</span>
+                </div>
+            `;
+        });
+        historyHtml += '</div>';
+        
+        historyDiv.innerHTML = historyHtml;
+        historyDiv.style.display = 'block';
+        element.classList.add('expanded');
+    } else {
+        // Collapse
+        historyDiv.style.display = 'none';
+        element.classList.remove('expanded');
+    }
 }
 
 function displayHistoryChart(data) {
@@ -262,6 +320,12 @@ function displayHistoryChart(data) {
 }
 
 function formatCurrency(value) {
+    const num = parseFloat(value);
+    if (isNaN(num)) return '$0.00';
+    return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function formatCurrencyNoDecimals(value) {
     const num = parseFloat(value);
     if (isNaN(num)) return '$0';
     return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
