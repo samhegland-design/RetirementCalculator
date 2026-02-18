@@ -68,12 +68,21 @@ async function fetchSheetData(sheetName) {
     return rows;
 }
 
+function parseNumber(value) {
+    if (typeof value === 'number') return value;
+    if (!value) return 0;
+    // Remove commas and any other non-numeric characters except decimal point and minus sign
+    const cleaned = String(value).replace(/[^0-9.-]/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+}
+
 function displayCurrentBalances(data) {
     const latestRow = data[data.length - 1];
     
     // Display summary cards
-    const total = parseFloat(latestRow['Total'] || 0);
-    const change = parseFloat(latestRow['Change'] || 0);
+    const total = parseNumber(latestRow['Total']);
+    const change = parseNumber(latestRow['Change']);
     
     document.getElementById('totalBalance').textContent = formatCurrency(total);
     document.getElementById('lastUpdate').textContent = latestRow['Date'] || '-';
@@ -85,7 +94,7 @@ function displayCurrentBalances(data) {
     // Display account balances
     const container = document.getElementById('accountsList');
     container.innerHTML = accountColumns.map(account => {
-        const balance = parseFloat(latestRow[account] || 0);
+        const balance = parseNumber(latestRow[account]);
         return `
             <div class="account-item">
                 <span class="account-name">${account}</span>
@@ -103,7 +112,7 @@ function displayHistoryChart(data) {
     }
     
     const dates = data.map(row => row['Date']);
-    const totals = data.map(row => parseFloat(row['Total'] || 0));
+    const totals = data.map(row => parseNumber(row['Total']));
     
     window.historyChart = new Chart(ctx, {
         type: 'line',
@@ -147,7 +156,7 @@ function displayBreakdownChart(data) {
     }
     
     const latestRow = data[data.length - 1];
-    const balances = accountColumns.map(account => parseFloat(latestRow[account] || 0));
+    const balances = accountColumns.map(account => parseNumber(latestRow[account]));
     
     window.breakdownChart = new Chart(ctx, {
         type: 'doughnut',
@@ -182,5 +191,7 @@ function displayBreakdownChart(data) {
 }
 
 function formatCurrency(value) {
-    return '$' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const num = parseFloat(value);
+    if (isNaN(num)) return '$0.00';
+    return '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
