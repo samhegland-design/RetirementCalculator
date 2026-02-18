@@ -133,20 +133,17 @@ h2 {
 
 .chart-container {
     position: relative;
-    height: 400px;
-}
-
-.chart-container canvas {
-    max-height: 400px;
 }
 
 @media (max-width: 768px) {
     .chart-container {
-        height: 300px;
+        min-height: 250px;
     }
-    
-    .chart-container canvas {
-        max-height: 300px;
+}
+
+@media (min-width: 769px) {
+    .chart-container {
+        min-height: 300px;
     }
 }
 

@@ -174,16 +174,18 @@ function displayHistoryChart(data) {
         window.historyChart.destroy();
     }
     
-    const dates = data.map(row => row['Date']);
-    const totals = data.map(row => parseNumber(row['Total']));
+    // Parse dates and create data points
+    const dataPoints = data.map(row => ({
+        x: new Date(row['Date']),
+        y: parseNumber(row['Total'])
+    }));
     
     window.historyChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: dates,
             datasets: [{
                 label: 'Total Balance',
-                data: totals,
+                data: dataPoints,
                 borderColor: '#667eea',
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 tension: 0.4,
@@ -193,13 +195,27 @@ function displayHistoryChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            aspectRatio: window.innerWidth < 768 ? 1.2 : 2.5,
+            aspectRatio: window.innerWidth < 768 ? 1.5 : 3,
             plugins: {
                 legend: {
                     display: false
                 }
             },
             scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'month',
+                        displayFormats: {
+                            month: 'MMM yyyy'
+                        }
+                    },
+                    adapters: {
+                        date: {
+                            locale: 'en-US'
+                        }
+                    }
+                },
                 y: {
                     beginAtZero: false,
                     ticks: {
