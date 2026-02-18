@@ -149,11 +149,14 @@ function displayHistoryChart(data) {
         window.historyChart.destroy();
     }
     
-    // Parse dates and create data points
-    const dataPoints = data.map(row => ({
-        x: new Date(row['Date']),
-        y: parseNumber(row['Total'])
-    }));
+    // Parse dates and create data points with timestamps
+    const dataPoints = data.map(row => {
+        const date = new Date(row['Date']);
+        return {
+            x: date.getTime(),
+            y: parseNumber(row['Total'])
+        };
+    });
     
     window.historyChart = new Chart(ctx, {
         type: 'line',
@@ -174,16 +177,29 @@ function displayHistoryChart(data) {
             plugins: {
                 legend: {
                     display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            const date = new Date(context[0].parsed.x);
+                            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                        },
+                        label: function(context) {
+                            return 'Balance: ' + formatCurrency(context.parsed.y);
+                        }
+                    }
                 }
             },
             scales: {
                 x: {
-                    type: 'time',
-                    time: {
-                        unit: 'month',
-                        displayFormats: {
-                            month: 'MMM yyyy'
-                        }
+                    type: 'linear',
+                    ticks: {
+                        callback: function(value) {
+                            const date = new Date(value);
+                            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                        },
+                        maxRotation: 45,
+                        minRotation: 45
                     }
                 },
                 y: {
